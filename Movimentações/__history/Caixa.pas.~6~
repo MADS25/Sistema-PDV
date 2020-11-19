@@ -1,0 +1,44 @@
+unit Caixa;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Buttons, Modulo,
+  Vendas;
+
+type
+  TFrmCaixa = class(TForm)
+    Label2: TLabel;
+    Label4: TLabel;
+    btnAbrir: TSpeedButton;
+    BtnFechar: TSpeedButton;
+    Label3: TLabel;
+    Label1: TLabel;
+    EdtUsuario: TEdit;
+    edtSenha: TEdit;
+    edtValor: TEdit;
+    edtCaixa: TEdit;
+    btnPDV: TButton;
+
+  private
+    { Private declarations }
+
+
+
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmCaixa: TFrmCaixa;
+
+
+implementation
+
+{$R *.dfm}
+
+
+
+
+end.

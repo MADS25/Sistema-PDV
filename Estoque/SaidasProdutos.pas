@@ -1,0 +1,236 @@
+unit SaidasProdutos;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.ComCtrls, Vcl.Grids,
+  Vcl.DBGrids, Vcl.StdCtrls, Vcl.Buttons;
+
+type
+  TFrmSaidaProdutos = class(TForm)
+    Label2: TLabel;
+    btnNovo: TSpeedButton;
+    btnSalvar: TSpeedButton;
+    BtnExcluir: TSpeedButton;
+    Label1: TLabel;
+    btnBuscarPro: TSpeedButton;
+    Label3: TLabel;
+    Label4: TLabel;
+    EdtProduto: TEdit;
+    DBGrid1: TDBGrid;
+    EdtQuantidade: TEdit;
+    dataBuscar: TDateTimePicker;
+    EdtMotivo: TEdit;
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnBuscarProClick(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure dataBuscarChange(Sender: TObject);
+    procedure btnSalvarClick(Sender: TObject);
+    procedure BtnExcluirClick(Sender: TObject);
+    procedure DBGrid1CellClick(Column: TColumn);
+  private
+    { Private declarations }
+      procedure limpar;
+      procedure habilitarCampos;
+      procedure desabilitarCampos;
+      procedure associarCampos;
+      procedure listar;
+      procedure buscarData;
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmSaidaProdutos: TFrmSaidaProdutos;
+  estoque : double;
+  idProdutoEst : string;
+
+implementation
+
+{$R *.dfm}
+
+uses Modulo, Produtos;
+
+
+procedure TFrmSaidaProdutos.limpar;
+begin
+   EdtQuantidade.Text := '';
+   EdtProduto.Text := '';
+   EdtMotivo.Text := '';
+end;
+
+procedure TFrmSaidaProdutos.habilitarCampos;
+begin
+   EdtQuantidade.Enabled := True;
+   EdtMotivo.Enabled := True;
+   btnBuscarPro.Enabled := True;
+end;
+
+procedure TFrmSaidaProdutos.dataBuscarChange(Sender: TObject);
+begin
+ buscarData;
+end;
+
+procedure TFrmSaidaProdutos.DBGrid1CellClick(Column: TColumn);
+begin
+     BtnExcluir.Enabled := True;
+
+     EdtProduto.Text :=    dm.query_saida_pro.FieldByName('produto').Value;
+     EdtMotivo.Text :=     dm.query_saida_pro.FieldByName('motivo').Value;
+     EdtQuantidade.Text := dm.query_saida_pro.FieldByName('quantidade').Value;
+
+     id :=           dm.query_saida_pro.FieldByName('id').Value;
+     idProdutoEst := dm.query_saida_pro.FieldByName('id_produto').Value;
+end;
+
+procedure TFrmSaidaProdutos.desabilitarCampos;
+begin
+   EdtQuantidade.Enabled := False;
+   EdtMotivo.Enabled := False;
+   btnBuscarPro.Enabled := False;
+end;
+
+procedure TFrmSaidaProdutos.FormActivate(Sender: TObject);
+begin
+   EdtProduto.Text := nomeProduto;
+end;
+
+procedure TFrmSaidaProdutos.FormShow(Sender: TObject);
+begin
+   limpar;
+   desabilitarCampos;
+   dm.tb_saida_pro.Active := True;
+   dataBuscar.Date := Date;
+   buscarData;
+end;
+
+procedure TFrmSaidaProdutos.associarCampos;
+begin
+    dm.tb_saida_pro.FieldByName('produto').Value := EdtProduto.Text;
+    dm.tb_saida_pro.FieldByName('quantidade').Value := EdtQuantidade.Text;
+    dm.tb_saida_pro.FieldByName('motivo').Value := EdtMotivo.Text;
+    dm.tb_saida_pro.FieldByName('data').Value := DateToStr(Date);
+    dm.tb_saida_pro.FieldByName('id_produto').Value := idProduto;
+end;
+
+procedure TFrmSaidaProdutos.listar;
+begin
+    dm.query_saida_pro.Close;
+    dm.query_saida_pro.SQL.Clear;
+    dm.query_saida_pro.SQL.Add('SELECT * FROM saida_produtos order by data desc');
+    dm.query_saida_pro.Open;
+end;
+
+procedure TFrmSaidaProdutos.btnBuscarProClick(Sender: TObject);
+begin
+  chamada := 'Prod';
+  FrmProdutos := TFrmProdutos.Create(self);
+  FrmProdutos.Show;
+end;
+
+procedure TFrmSaidaProdutos.BtnExcluirClick(Sender: TObject);
+begin
+if MessageDlg('Deseja Excluir o registro?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+begin
+  dm.tb_saida_pro.Delete;
+
+
+   //ATUALIZAR O ESTOQUE
+
+   //RECUPERAR O ESTOQUE ATUAL
+       dm.query_produtos.Close;
+       dm.query_produtos.SQL.Clear;
+       dm.query_produtos.SQL.Add('select * from produtos where id = :id');
+
+       dm.query_produtos.ParamByName('id').Value := idProdutoEst;
+       dm.query_produtos.Open;
+
+         if not dm.query_produtos.isEmpty then
+       begin
+         estoqueProduto :=  dm.query_produtos['estoque'];
+       end;
+
+
+      estoque := estoqueProduto + strToFloat(edtQuantidade.Text);
+
+       dm.query_produtos.Close;
+       dm.query_produtos.SQL.Clear;
+       dm.query_produtos.SQL.Add('UPDATE produtos set estoque = :estoque where id = :id');
+       dm.query_produtos.ParamByName('estoque').Value := estoque;
+       dm.query_produtos.ParamByName('id').Value := idProduto;
+       dm.query_produtos.ExecSQL;
+
+     MessageDlg('Deletado com Sucesso!!', mtInformation, mbOKCancel, 0);
+
+     buscarData;
+     BtnExcluir.Enabled := false;
+     limpar;
+
+end;
+
+end;
+
+procedure TFrmSaidaProdutos.btnNovoClick(Sender: TObject);
+begin
+   limpar;
+   habilitarCampos;
+   dm.tb_saida_pro.Insert;
+   btnSalvar.Enabled := True;
+end;
+
+procedure TFrmSaidaProdutos.btnSalvarClick(Sender: TObject);
+begin
+   if Trim(EdtProduto.Text) = '' then
+      begin
+        MessageDlg('Preencha um Produto!', mtInformation, mbOKCancel, 0);
+        exit;
+      end;
+
+      if Trim(EdtQuantidade.Text) = '' then
+      begin
+        MessageDlg('Preencha uma Quantidade!', mtInformation, mbOKCancel, 0);
+        EdtQuantidade.SetFocus;
+        exit;
+      end;
+
+       if Trim(EdtMotivo.Text) = '' then
+      begin
+        MessageDlg('Preencha um Motivo!', mtInformation, mbOKCancel, 0);
+        EdtMotivo.SetFocus;
+        exit;
+      end;
+
+
+     associarCampos;
+     dm.tb_saida_pro.Post;
+
+      //Atualizar o Estoque
+
+     estoque := estoqueProduto - strToFloat(edtQuantidade.Text);
+
+     dm.query_produtos.Close;
+     dm.query_produtos.SQL.Clear;
+     dm.query_produtos.SQL.Add('UPDATE produtos set estoque = :estoque where id = :id');
+     dm.query_produtos.ParamByName('estoque').Value := estoque;
+     dm.query_produtos.ParamByName('id').Value := idProduto;
+     dm.query_produtos.ExecSQL;
+
+    MessageDlg('Salvo com Sucesso!', mtInformation, mbOKCancel,0);
+    limpar;
+    btnSalvar.Enabled := false;
+    desabilitarCampos;
+    buscarData;
+end;
+
+procedure TFrmSaidaProdutos.buscarData;
+begin
+    dm.query_saida_pro.Close;
+    dm.query_saida_pro.SQL.Clear;
+    dm.query_saida_pro.SQL.Add('SELECT * FROM saida_produtos WHERE data = :data order by data desc');
+    dm.query_saida_pro.ParamByName('data').Value := FormatDateTime('yyyy/mm/dd',dataBuscar.Date);
+    dm.query_saida_pro.Open;
+end;
+
+end.

@@ -1,0 +1,133 @@
+unit Caixa;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Buttons, Modulo,
+  Vendas;
+
+type
+  TFrmCaixa = class(TForm)
+    Label2: TLabel;
+    Label4: TLabel;
+    btnAbrir: TSpeedButton;
+    BtnFechar: TSpeedButton;
+    Label3: TLabel;
+    Label1: TLabel;
+    EdtUsuario: TEdit;
+    edtSenha: TEdit;
+    edtValor: TEdit;
+    edtCaixa: TEdit;
+    btnPDV: TButton;
+    procedure FormShow(Sender: TObject);
+    procedure btnPDVClick(Sender: TObject);
+
+  private
+    { Private declarations }
+    procedure limpar;
+    procedure habilitarCampos;
+    procedure desabilitarCampos;
+    procedure associarCampos;
+    procedure listar;
+
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmCaixa: TFrmCaixa;
+  gerente: string;
+
+
+implementation
+
+{$R *.dfm}
+
+
+
+
+procedure TFrmCaixa.FormShow(Sender: TObject);
+begin
+
+  desabilitarCampos;
+  dm.tb_Caixa.Active := True;
+  listar;
+
+   if statusCaixa = 'Abertura' then
+  begin
+
+  end;
+
+end;
+
+procedure TFrmCaixa.limpar;
+begin
+ edtUsuario.Text := '';
+ edtSenha.Text := '';
+ edtvalor.Text := '';
+ edtCaixa.Text := '';
+end;
+
+procedure TFrmCaixa.habilitarCampos;
+begin
+  edtUsuario.Enabled := true;
+  edtSenha.Enabled := true;
+  edtvalor.Enabled := true;
+  edtCaixa.Enabled := true;
+end;
+
+procedure TFrmCaixa.btnPDVClick(Sender: TObject);
+begin
+   //VERIFICAR SE O CAIXA JÁ ESTÁ ABERTO
+   dm.query_caixa.Close;
+   dm.query_caixa.SQL.Clear;
+   dm.query_caixa.SQL.Add('SELECT * from caixa where status = :status and num_caixa = :num and data_abertura = curDate()');
+   dm.query_caixa.ParamByName('status').Value := 'Aberto';
+   dm.query_caixa.ParamByName('num').Value := edtCaixa.Text;
+   dm.query_caixa.Open;
+
+   if not dm.query_caixa.isEmpty then
+   begin
+    FrmVendas := TFrmVendas.Create(self);
+     limpar;
+     btnAbrir.Enabled := false;
+     btnFechar.Enabled := true;
+     edtCaixa.Enabled := false;
+     FrmVendas.ShowModal;
+   end
+     else
+   begin
+      MessageDlg('Abra Primeiro o Caixa!!', mtInformation, mbOKCancel, 0);
+   end;
+end;
+
+procedure TFrmCaixa.desabilitarCampos;
+begin
+  edtUsuario.Enabled := false;
+  edtSenha.Enabled := false;
+  edtvalor.Enabled := false;
+  edtCaixa.Enabled := false;
+end;
+
+procedure TFrmCaixa.associarCampos;
+begin
+  dm.tb_caixa.FieldByName('data_abertura').Value := DateToStr(Date);
+  dm.tb_caixa.FieldByName('hora_abertura').Value := TimeToStr(Time);
+  dm.tb_caixa.FieldByName('valor_abertura').Value := strToFloat(edtValor.Text);
+  dm.tb_caixa.FieldByName('funcionario_abertura').Value := gerente;
+  dm.tb_caixa.FieldByName('num_caixa').Value := edtCaixa.Text;
+  dm.tb_caixa.FieldByName('operador').Value := nomeUsuario;
+  dm.tb_caixa.FieldByName('status').Value := 'Aberto';
+end;
+
+procedure TFrmCaixa.listar;
+begin
+  dm.query_caixa.Close;
+  dm.query_caixa.SQL.Clear;
+  dm.query_caixa.SQL.Add('SELECT * from caixa where data_abertura = curDate() ');
+  dm.query_caixa.Open;
+end;
+
+
+end.

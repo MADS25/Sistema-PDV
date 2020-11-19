@@ -1,0 +1,124 @@
+unit Usuarios;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.StdCtrls, Vcl.Grids,
+  Vcl.DBGrids, Vcl.Buttons;
+
+type
+  TFrmUsuarios = class(TForm)
+    btnNovo: TSpeedButton;
+    btnSalvar: TSpeedButton;
+    btnEditar: TSpeedButton;
+    btnExcluir: TSpeedButton;
+    DBGrid1: TDBGrid;
+    EdtNome: TEdit;
+    lb_nome: TLabel;
+    EdtBuscarNome: TEdit;
+    lb_buscar: TLabel;
+    btnBuscarFuncionario: TSpeedButton;
+    EdtUsuario: TEdit;
+    Label1: TLabel;
+    EdtSenha: TEdit;
+    Label2: TLabel;
+    procedure btnBuscarFuncionarioClick(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+
+  private
+    { Private declarations }
+      procedure limpar;
+      procedure habilitarCampos;
+      procedure desabilitarCampos;
+      procedure verificaCadastro;
+
+      procedure associarCampos;
+      procedure listar;
+      procedure buscarNome;
+
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmUsuarios: TFrmUsuarios;
+
+implementation
+
+{$R *.dfm}
+
+uses Modulo, Menu, Funcionarios;
+
+procedure TFrmUsuarios.btnBuscarFuncionarioClick(Sender: TObject);
+begin
+  chamada := 'Func';
+  FrmFuncionarios := TFrmFuncionarios.Create(self);
+  FrmFuncionarios.Show;
+end;
+
+procedure TFrmUsuarios.FormActivate(Sender: TObject);
+begin
+ EdtNome.Text := nomeFunc;
+end;
+
+procedure TFrmUsuarios.FormShow(Sender: TObject);
+begin
+ desabilitarCampos;
+ dm.tb_usuarios.Active := True;
+ listar;
+end;
+
+procedure TFrmUsuarios.limpar;
+begin
+    EdtNome.Text := '';
+    EdtUsuario.Text := '';
+    EdtSenha.Text := '';
+end;
+
+procedure TFrmUsuarios.habilitarCampos;
+begin
+    EdtNome.Enabled := True;
+    EdtUsuario.Enabled := True;
+    EdtSenha.Enabled := True;
+end;
+
+procedure TFrmUsuarios.desabilitarCampos;
+begin
+    EdtNome.Enabled := False;
+    EdtUsuario.Enabled := False;
+    EdtSenha.Enabled := False;
+end;
+
+procedure TFrmUsuarios.verificaCadastro;
+begin
+
+end;
+
+procedure TFrmUsuarios.associarCampos;
+begin
+    dm.tb_usuarios.FieldByName('nome').Value := EdtNome.Text;
+    dm.tb_usuarios.FieldByName('usuario').Value := EdtUsuario.Text;
+    dm.tb_usuarios.FieldByName('senha').Value := EdtSenha.Text;
+end;
+
+procedure TFrmUsuarios.listar;
+begin
+   dm.query_usuarios.Close;
+    dm.query_usuarios.SQL.Clear;
+    dm.query_usuarios.SQL.Add('SELECT * FROM usuarios order by name asc');
+    dm.query_usuarios.Open;
+end;
+
+procedure TFrmUsuarios.buscarNome;
+begin
+    dm.query_usuarios.Close;
+    dm.query_usuarios.SQL.Clear;
+    dm.query_usuarios.SQL.Add('SELECT * FROM usuarios WHERE nome LIKE :nome order by cargo asc');
+    dm.query_usuarios.ParamByName('nome').Value := EdtBuscarNome.Text + '%';
+    dm.query_usuarios.Open;
+end;
+
+
+end.

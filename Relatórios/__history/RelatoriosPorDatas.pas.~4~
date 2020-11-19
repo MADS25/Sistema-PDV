@@ -1,0 +1,96 @@
+unit RelatoriosPorDatas;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.Buttons, Vcl.StdCtrls,
+  Modulo;
+
+type
+  TFrmRelDatas = class(TForm)
+    Label1: TLabel;
+    Label2: TLabel;
+    btnRelatorio: TSpeedButton;
+    dataInicial: TDateTimePicker;
+    dataFinal: TDateTimePicker;
+    procedure FormShow(Sender: TObject);
+    procedure btnRelatorioClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmRelDatas: TFrmRelDatas;
+  totalEntradas : double;
+  totalSaidas : double;
+implementation
+
+{$R *.dfm}
+
+procedure TFrmRelDatas.btnRelatorioClick(Sender: TObject);
+begin
+  if rel = 'Caixa' then
+  begin
+     dm.query_caixa.Close;
+     dm.query_caixa.SQL.Clear;
+     dm.query_caixa.SQL.Add('SELECT * from caixa where data_abertura >= :dataInicial and data_abertura <= :dataFinal order by data_abertura desc');
+     dm.query_caixa.ParamByName('dataInicial').Value := FormatDateTime('yyyy/mm/dd' ,dataInicial.Date);
+     dm.query_caixa.ParamByName('dataFinal').Value := FormatDateTime('yyyy/mm/dd' ,dataFinal.Date);
+     dm.query_caixa.Open;
+
+     dm.rel_caixa.LoadFromFile(GetCurrentDir + '\rel\caixa.fr3');
+     dm.rel_caixa.Variables['dataInicial'] := dataInicial.Date;
+     dm.rel_caixa.Variables['dataFinal'] := dataFinal.Date;
+     dm.rel_caixa.ShowReport();
+  end;
+
+  if rel = 'Movimentacoes' then
+  begin
+     dm.query_mov.Close;
+     dm.query_mov.SQL.Clear;
+     dm.query_mov.SQL.Add('SELECT * from movimentacoes where data >= :dataInicial and data <= :dataFinal order by data asc');
+     dm.query_mov.ParamByName('dataInicial').Value := FormatDateTime('yyyy/mm/dd' ,dataInicial.Date);
+     dm.query_mov.ParamByName('dataFinal').Value := FormatDateTime('yyyy/mm/dd' ,dataFinal.Date);
+     dm.query_mov.Open;
+
+     dm.rel_Mov_Entradas.Close;
+     dm.rel_Mov_Entradas.SQL.Clear;
+     dm.rel_Mov_Entradas.SQL.Add('select sum(valor) as total from movimentacoes where data >= :dataInicial and data <= :dataFinal and tipo = "Entrada" ') ;
+     dm.rel_Mov_Entradas.ParamByName('dataInicial').Value :=  FormatDateTime('yyyy/mm/dd', dataInicial.Date);
+     dm.rel_Mov_Entradas.ParamByName('dataFinal').Value :=  FormatDateTime('yyyy/mm/dd', dataFinal.Date);
+     dm.rel_Mov_Entradas.Prepare;
+     dm.rel_Mov_Entradas.Open;
+
+     totalEntradas := dm.rel_Mov_Entradas.FieldByName('total').AsFloat;
+
+     dm.rel_Mov_Saidas.Close;
+     dm.rel_Mov_Saidas.SQL.Clear;
+     dm.rel_Mov_Saidas.SQL.Add('select sum(valor) as total from movimentacoes where data >= :dataInicial and data <= :dataFinal and tipo = "Saída" ') ;
+     dm.rel_Mov_Saidas.ParamByName('dataInicial').Value :=  FormatDateTime('yyyy/mm/dd', dataInicial.Date);
+     dm.rel_Mov_Saidas.ParamByName('dataFinal').Value :=  FormatDateTime('yyyy/mm/dd', dataFinal.Date);
+     dm.rel_Mov_Saidas.Prepare;
+     dm.rel_Mov_Saidas.Open;
+
+     totalSaidas := dm.rel_Mov_Saidas.FieldByName('total').AsFloat;
+
+     dm.rel_movimentacoes.LoadFromFile(GetCurrentDir + '\rel\movimentacoes.fr3');
+     dm.rel_movimentacoes.Variables['dataInicial'] := dataInicial.Date;
+     dm.rel_movimentacoes.Variables['dataFinal'] := dataFinal.Date;
+     dm.rel_movimentacoes.Variables['totalEntradas'] := totalEntradas;
+     dm.rel_movimentacoes.Variables['totalSaidas'] := totalSaidas;
+     dm.rel_movimentacoes.ShowReport();
+
+  end;
+
+end;
+
+procedure TFrmRelDatas.FormShow(Sender: TObject);
+begin
+    dataInicial.Date := Date;
+    dataFinal.Date := Date;
+end;
+
+end.

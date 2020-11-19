@@ -1,0 +1,382 @@
+unit Produtos;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.ExtDlgs, Vcl.Mask,
+  Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ExtCtrls, Vcl.Buttons;
+
+type
+  TFrmProdutos = class(TForm)
+    Label2: TLabel;
+    Label3: TLabel;
+    btnNovo: TSpeedButton;
+    btnSalvar: TSpeedButton;
+    btnEditar: TSpeedButton;
+    btnExcluir: TSpeedButton;
+    Label4: TLabel;
+    Label5: TLabel;
+    imagem: TImage;
+    btnImprimir: TSpeedButton;
+    Label1: TLabel;
+    imgCod: TImage;
+    Panel1: TPanel;
+    btnAdd: TSpeedButton;
+    EdtNome: TEdit;
+    EdtDescricao: TEdit;
+    DBGrid1: TDBGrid;
+    EdtValor: TEdit;
+    Panel2: TPanel;
+    btnGerarCod: TSpeedButton;
+    EdtBuscarNome: TEdit;
+    rbCodigo: TRadioButton;
+    rbNome: TRadioButton;
+    EdtBuscarCodigo: TMaskEdit;
+    dialog: TOpenPictureDialog;
+    EdtCodigo: TMaskEdit;
+    procedure FormShow(Sender: TObject);
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnSalvarClick(Sender: TObject);
+    procedure btnImprimirClick(Sender: TObject);
+    procedure DBGrid1CellClick(Column: TColumn);
+    procedure btnGerarCodClick(Sender: TObject);
+    procedure btnEditarClick(Sender: TObject);
+    procedure btnExcluirClick(Sender: TObject);
+    procedure EdtBuscarNomeChange(Sender: TObject);
+    procedure EdtBuscarCodigoChange(Sender: TObject);
+    procedure rbCodigoClick(Sender: TObject);
+    procedure rbNomeClick(Sender: TObject);
+  private
+    { Private declarations }
+      procedure limpar;
+      procedure habilitarCampos;
+      procedure desabilitarCampos;
+      procedure associarCampos;
+      procedure listar;
+      procedure buscarNome;
+      procedure buscarCod;
+      procedure verificaCadastro;
+
+      procedure GerarCodigo(codigo: string; canvas: TCanvas);
+
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmProdutos: TFrmProdutos;
+  id:string;
+  codigoAntigo:string;
+
+implementation
+
+{$R *.dfm}
+
+uses Modulo, ImprimirBarras;
+
+procedure TFrmProdutos.FormShow(Sender: TObject);
+begin
+  desabilitarCampos;
+  rbNome.Checked;
+  EdtBuscarCodigo.Visible := False;
+  dm.tb_produtos.Active := True;
+  listar;
+end;
+
+procedure TFrmProdutos.limpar;
+begin
+  EdtNome.Text :='';
+  EdtDescricao.Text :='';
+  EdtValor.Text :='';
+  EdtCodigo.Text :='';
+  EdtBuscarNome.Text := '';
+  EdtBuscarCodigo.Text := '';
+end;
+
+procedure TFrmProdutos.habilitarCampos;
+begin
+  EdtNome.Enabled := True;
+  EdtDescricao.Enabled := True;
+  EdtValor.Enabled := True;
+  EdtCodigo.Enabled := True;
+  btnAdd.Enabled := True;
+end;
+
+procedure TFrmProdutos.desabilitarCampos;
+begin
+  EdtNome.Enabled := False;
+  EdtDescricao.Enabled := False;
+  EdtValor.Enabled := False;
+  EdtCodigo.Enabled := False;
+  btnAdd.Enabled := False;
+end;
+
+procedure TFrmProdutos.EdtBuscarCodigoChange(Sender: TObject);
+begin
+  buscarCod;
+end;
+
+procedure TFrmProdutos.EdtBuscarNomeChange(Sender: TObject);
+begin
+  if EdtBuscarNome.Text <> '' then
+  begin
+     buscarNome;
+  end
+  else
+  begin
+   listar;
+  end;
+end;
+
+procedure TFrmProdutos.associarCampos;
+begin
+  dm.tb_produtos.FieldByName('nome').Value := EdtNome.Text;
+  dm.tb_produtos.FieldByName('codigo').Value := EdtCodigo.Text;
+  dm.tb_produtos.FieldByName('descricao').Value := EdtDescricao.Text;
+  dm.tb_produtos.FieldByName('valor').Value := EdtValor.Text;
+  dm.tb_produtos.FieldByName('estoque').Value := 0;
+  dm.tb_produtos.FieldByName('data').Value := DateToStr(Date);
+end;
+
+procedure TFrmProdutos.listar;
+begin
+  dm.query_produtos.Close;
+  dm.query_produtos.SQL.Clear;
+  dm.query_produtos.SQL.Add('SELECT * FROM produtos order by nome asc');
+  dm.query_produtos.Open;
+end;
+
+procedure TFrmProdutos.rbCodigoClick(Sender: TObject);
+begin
+  listar;
+
+  EdtBuscarNome.Visible :=False;
+  EdtBuscarNome.Text := '';
+  EdtBuscarCodigo.Visible := True;
+  EdtBuscarCodigo.SetFocus;
+end;
+
+procedure TFrmProdutos.rbNomeClick(Sender: TObject);
+begin
+  listar;
+  EdtBuscarNome.Visible :=True;
+  EdtBuscarCodigo.Visible := False;
+  EdtBuscarCodigo.Text := '';
+  EdtBuscarNome.SetFocus;
+end;
+
+procedure TFrmProdutos.buscarNome;
+begin
+  dm.query_produtos.Close;
+  dm.query_produtos.SQL.Clear;
+  dm.query_produtos.SQL.Add('SELECT * FROM produtos WHERE nome LIKE :nome order by nome asc');
+  dm.query_produtos.ParamByName('nome').Value := EdtBuscarNome.Text + '%';
+  dm.query_produtos.Open;
+end;
+
+procedure TFrmProdutos.DBGrid1CellClick(Column: TColumn);
+begin
+  habilitarCampos;
+
+  EdtNome.Enabled := True;
+  BtnEditar.Enabled := True;
+  BtnExcluir.Enabled := True;
+  BtnImprimir.Enabled := True;
+  BtnGerarCod.Enabled := True;
+
+  dm.tb_produtos.Edit;
+
+  EdtNome.Text := dm.query_produtos.FieldByName('nome').Value;
+  EdtDescricao.Text := dm.query_produtos.FieldByName('descricao').Value;
+  EdtValor.Text := dm.query_produtos.FieldByName('valor').Value;
+  EdtCodigo.Text := dm.query_produtos.FieldByName('codigo').Value;
+  GerarCodigo(EdtCodigo.Text, imgCod.Canvas);
+  id := dm.query_produtos.FieldByName('id').Value;
+  codigoProduto := dm.query_produtos.FieldByName('codigo').Value;
+
+end;
+
+procedure TFrmProdutos.btnEditarClick(Sender: TObject);
+var cod: string;
+begin
+     if Trim(EdtNome.Text) = '' then
+      begin
+        MessageDlg('Preencha o Nome!', mtInformation, mbOKCancel, 0);
+        EdtNome.SetFocus;
+        exit;
+      end;
+
+      if Trim(EdtCodigo.Text) = '' then
+      begin
+        MessageDlg('Preencha o Codigo!', mtInformation, mbOKCancel, 0);
+        EdtCodigo.SetFocus;
+        exit;
+      end;
+
+      if Trim(EdtValor.Text) = '' then
+      begin
+        MessageDlg('Preencha o Valor!', mtInformation, mbOKCancel, 0);
+        EdtValor.SetFocus;
+        exit;
+      end;
+
+    associarCampos;
+
+    dm.query_produtos.Close;
+    dm.query_produtos.SQL.Clear;
+    dm.query_produtos.SQL.Add('UPDATE produtos set nome = :nome, codigo = :codigo, descricao = :descricao, valor = :valor WHERE id = :id');
+    dm.query_produtos.ParamByName('nome').Value := EdtNome.Text;
+    dm.query_produtos.ParamByName('codigo').Value := EdtCodigo.Text;
+    dm.query_produtos.ParamByName('descricao').Value := EdtDescricao.Text;
+    dm.query_produtos.ParamByName('valor').Value := strToFloat(EdtValor.Text);
+    dm.query_produtos.ParamByName('id').Value := id;
+    dm.query_produtos.ExecSQL;
+
+    listar;
+    MessageDlg('Editado com sucesso!!', mtInformation, mbOKCancel, 0);
+    btnEditar.Enabled := False;
+    btnExcluir.Enabled := False;
+    btnSalvar.Enabled := False;
+    limpar;
+    desabilitarCampos;
+end;
+
+procedure TFrmProdutos.btnExcluirClick(Sender: TObject);
+begin
+   if MessageDlg('Deseja Excluir o registro?', mtConfirmation,[mbYes,mbNo],0) = mrYes then
+  begin
+    associarCampos;
+    dm.tb_produtos.Delete;
+    MessageDlg('Deletado com Sucesso!', mtInformation, mbOKCancel,0);
+    btnEditar.Enabled := False;
+    btnExcluir.Enabled := False;
+    btnSalvar.Enabled := False;
+    limpar;
+    desabilitarCampos;
+    listar;
+  end;
+end;
+
+procedure TFrmProdutos.btnGerarCodClick(Sender: TObject);
+begin
+ verificaCadastro;
+ GerarCodigo(EdtCodigo.Text, imgCod.Canvas);
+ btnSalvar.Enabled := True;
+end;
+
+procedure TFrmProdutos.btnImprimirClick(Sender: TObject);
+begin
+   FrmImprimirBarras := TFrmImprimirBarras.Create(self);
+   FrmImprimirBarras.ShowModal;
+end;
+
+procedure TFrmProdutos.btnNovoClick(Sender: TObject);
+begin
+  habilitarCampos;
+  dm.tb_produtos.Insert;
+  btnGerarCod.Enabled := True;
+  EdtCodigo.SetFocus;
+end;
+
+procedure TFrmProdutos.btnSalvarClick(Sender: TObject);
+
+begin
+      if Trim(EdtNome.Text) = '' then
+      begin
+        MessageDlg('Preencha o Nome!', mtInformation, mbOKCancel, 0);
+        EdtNome.SetFocus;
+        exit;
+      end;
+
+      if Trim(EdtCodigo.Text) = '' then
+      begin
+        MessageDlg('Preencha o Codigo!', mtInformation, mbOKCancel, 0);
+        EdtCodigo.SetFocus;
+        exit;
+      end;
+
+      if Trim(EdtValor.Text) = '' then
+      begin
+        MessageDlg('Preencha o Valor!', mtInformation, mbOKCancel, 0);
+        EdtValor.SetFocus;
+        exit;
+      end;
+
+    associarCampos;
+    dm.tb_produtos.Post;
+    MessageDlg('Salvo com Sucesso!', mtInformation, mbOKCancel,0);
+    limpar;
+    btnSalvar.Enabled := false;
+    desabilitarCampos;
+    listar;
+end;
+
+procedure TFrmProdutos.buscarCod;
+begin
+  dm.query_produtos.Close;
+  dm.query_produtos.SQL.Clear;
+  dm.query_produtos.SQL.Add('SELECT * FROM produtos WHERE codigo LIKE :codigo order by nome asc');
+  dm.query_produtos.ParamByName('codigo').Value := EdtBuscarCodigo.Text + '%';
+  dm.query_produtos.Open;
+end;
+
+procedure TFrmProdutos.GerarCodigo(codigo: string; canvas: TCanvas);
+const
+  digitos : array['0'..'9'] of string[5]= ('00110', '10001', '01001', '11000',
+  '00101', '10100', '01100', '00011', '10010', '01010');
+  var s : string;
+  i, j, x, t : Integer;
+begin
+  // Gerar o valor para desenhar o código de barras
+  // Caracter de início
+  s := '0000';
+  for i := 1 to length(codigo) div 2 do
+  for j := 1 to 5 do
+  s := s + Copy(Digitos[codigo[i * 2 - 1]], j, 1) + Copy(Digitos[codigo[i * 2]], j, 1);
+  // Caracter de fim
+  s := s + '100';
+  // Desenhar em um objeto canvas
+  // Configurar os parâmetros iniciais
+  x := 0;
+  // Pintar o fundo do código de branco
+  Canvas.Brush.Color := clWhite;
+  Canvas.Pen.Color := clWhite;
+  Canvas.Rectangle(0,0, 2000, 79);
+  // Definir as cores da caneta
+  Canvas.Brush.Color := clBlack;
+  Canvas.Pen.Color := clBlack;
+  // Escrever o código de barras no canvas
+  for i := 1 to length(s) do
+    begin
+    // Definir a espessura da barra
+    t := strToInt(s[i]) * 2 + 1;
+    // Imprimir apenas barra sim barra não (preto/branco - intercalado);
+    if i mod 2 = 1 then
+    Canvas.Rectangle(x, 0, x + t, 79);
+    // Passar para a próxima barra
+    x := x + t;
+    end;
+
+end;
+
+procedure TFrmProdutos.verificaCadastro;
+var cod: string;
+begin
+  //verificar se o Codigo do produto já está cadastrado
+    dm.query_coringa.Close;
+    dm.query_coringa.SQL.Clear;
+    dm.query_coringa.SQL.Add('SELECT * FROM produtos WHERE codigo = ' + EdtCodigo.Text);
+    dm.query_coringa.Open;
+
+     if not dm.query_coringa.IsEmpty then
+     begin
+       cod := dm.query_coringa['codigo'];
+       MessageDlg('O Codigo ' + cod + ' já esta cadastrado!', mtInformation, mbOKCancel, 0);
+       EdtCodigo.Text := '';
+       EdtCodigo.SetFocus;
+       Exit;
+     end;
+end;
+
+end.

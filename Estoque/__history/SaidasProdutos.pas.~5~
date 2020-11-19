@@ -1,0 +1,126 @@
+unit SaidasProdutos;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.ComCtrls, Vcl.Grids,
+  Vcl.DBGrids, Vcl.StdCtrls, Vcl.Buttons;
+
+type
+  TFrmSaidaProdutos = class(TForm)
+    Label2: TLabel;
+    btnNovo: TSpeedButton;
+    btnSalvar: TSpeedButton;
+    BtnExcluir: TSpeedButton;
+    Label1: TLabel;
+    btnBuscarPro: TSpeedButton;
+    Label3: TLabel;
+    Label4: TLabel;
+    EdtProduto: TEdit;
+    DBGrid1: TDBGrid;
+    EdtQuantidade: TEdit;
+    dataBuscar: TDateTimePicker;
+    EdtMotivo: TEdit;
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnBuscarProClick(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+  private
+    { Private declarations }
+      procedure limpar;
+      procedure habilitarCampos;
+      procedure desabilitarCampos;
+      procedure associarCampos;
+      procedure listar;
+      procedure buscarData;
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmSaidaProdutos: TFrmSaidaProdutos;
+
+implementation
+
+{$R *.dfm}
+
+uses Modulo, Produtos;
+
+
+procedure TFrmSaidaProdutos.limpar;
+begin
+   EdtQuantidade.Text := '';
+   EdtProduto.Text := '';
+   EdtMotivo.Text := '';
+end;
+
+procedure TFrmSaidaProdutos.habilitarCampos;
+begin
+   EdtQuantidade.Enabled := True;
+   EdtMotivo.Enabled := True;
+   btnBuscarPro.Enabled := True;
+end;
+
+procedure TFrmSaidaProdutos.desabilitarCampos;
+begin
+   EdtQuantidade.Enabled := False;
+   EdtMotivo.Enabled := False;
+   btnBuscarPro.Enabled := False;
+end;
+
+procedure TFrmSaidaProdutos.FormActivate(Sender: TObject);
+begin
+   EdtProduto.Text := nomeProduto;
+end;
+
+procedure TFrmSaidaProdutos.FormShow(Sender: TObject);
+begin
+   limpar;
+   desabilitarCampos;
+   dm.tb_saida_pro.Active := True;
+   dataBuscar.Date := Date;
+   buscarData;
+end;
+
+procedure TFrmSaidaProdutos.associarCampos;
+begin
+    dm.tb_saida_pro.FieldByName('produto').Value := EdtProduto.Text;
+    dm.tb_saida_pro.FieldByName('quantidade').Value := EdtQuantidade.Text;
+    dm.tb_saida_pro.FieldByName('motivo').Value := EdtMotivo.Text;
+    dm.tb_saida_pro.FieldByName('data').Value := DateToStr(Date);
+end;
+
+procedure TFrmSaidaProdutos.listar;
+begin
+    dm.query_saida_pro.Close;
+    dm.query_saida_pro.SQL.Clear;
+    dm.query_saida_pro.SQL.Add('SELECT * FROM saida_produtos order by data desc');
+    dm.query_saida_pro.Open;
+end;
+
+procedure TFrmSaidaProdutos.btnBuscarProClick(Sender: TObject);
+begin
+  chamada := 'Prod';
+  FrmProdutos := TFrmProdutos.Create(self);
+  FrmProdutos.Show;
+end;
+
+procedure TFrmSaidaProdutos.btnNovoClick(Sender: TObject);
+begin
+   limpar;
+   habilitarCampos;
+   dm.tb_saida_pro.Insert;
+   btnSalvar.Enabled := True;
+end;
+
+procedure TFrmSaidaProdutos.buscarData;
+begin
+    dm.query_saida_pro.Close;
+    dm.query_saida_pro.SQL.Clear;
+    dm.query_saida_pro.SQL.Add('SELECT * FROM saida_produtos WHERE e.data = :data order by data desc');
+    dm.query_saida_pro.ParamByName('data').Value := FormatDateTime('yyyy/mm/dd',dataBuscar.Date);
+    dm.query_saida_pro.Open;
+end;
+
+end.

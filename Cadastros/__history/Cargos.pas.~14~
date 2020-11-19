@@ -1,0 +1,154 @@
+unit Cargos;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.StdCtrls, Vcl.Grids,
+  Vcl.DBGrids, Vcl.Buttons;
+
+type
+  TFrmCargos = class(TForm)
+    btnNovo: TSpeedButton;
+    btnSalvar: TSpeedButton;
+    BtnEditar: TSpeedButton;
+    btnExcluir: TSpeedButton;
+    grid: TDBGrid;
+    EdtNome: TEdit;
+    lb_nome: TLabel;
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnSalvarClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure gridCellClick(Column: TColumn);
+    procedure BtnEditarClick(Sender: TObject);
+  private
+    { Private declarations }
+    procedure associarCampos;
+    procedure listar;
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmCargos: TFrmCargos;
+  id : string;
+
+implementation
+
+{$R *.dfm}
+
+uses Modulo;
+
+procedure TFrmCargos.associarCampos;
+begin
+ dm.tb_Cargos.FieldByName('cargo').Value := EdtNome.Text;
+end;
+
+procedure TFrmCargos.BtnEditarClick(Sender: TObject);
+var
+cargo: string;
+begin
+
+  if Trim(EdtNome.Text) = '' then
+    begin
+      MessageDlg('Preencha o Cargo!', mtInformation, mbOKCancel, 0);
+      EdtNome.SetFocus;
+      exit;
+    end;
+
+  //verificar se o cargo já está cadastrado
+  dm.query_cargos.Close;
+  dm.query_cargos.SQL.Clear;
+  dm.query_cargos.SQL.Add('SELECT * FROM cargos WHERE cargo = ' + QuotedStr(Trim(EdtNome.Text)));
+  dm.query_cargos.Open;
+
+ if not dm.query_cargos.IsEmpty then
+   begin
+     cargo := dm.query_cargos['cargo'];
+     MessageDlg('O cargo ' + cargo + ' já esta cadastrado!', mtInformation, mbOKCancel, 0);
+     EdtNome.Text := '';
+     EdtNome.SetFocus;
+     Exit;
+   end;
+
+
+
+
+
+
+end;
+
+procedure TFrmCargos.btnNovoClick(Sender: TObject);
+begin
+ btnSalvar.Enabled := True;
+ EdtNome.Enabled := True;
+ EdtNome.Text := '';
+ EdtNome.SetFocus;
+ dm.tb_Cargos.Insert;
+ end;
+
+procedure TFrmCargos.btnSalvarClick(Sender: TObject);
+var
+cargo: string;
+begin
+
+  if Trim(EdtNome.Text) = '' then
+    begin
+      MessageDlg('Preencha o Cargo!', mtInformation, mbOKCancel, 0);
+      EdtNome.SetFocus;
+      exit;
+    end;
+
+  //verificar se o cargo já está cadastrado
+  dm.query_cargos.Close;
+  dm.query_cargos.SQL.Clear;
+  dm.query_cargos.SQL.Add('SELECT * FROM cargos WHERE cargo = ' + QuotedStr(Trim(EdtNome.Text)));
+  dm.query_cargos.Open;
+
+  if not dm.query_cargos.IsEmpty then
+   begin
+     cargo := dm.query_cargos['cargo'];
+     MessageDlg('O cargo ' + cargo + ' já esta cadastrado!', mtInformation, mbOKCancel, 0);
+     EdtNome.Text := '';
+     EdtNome.SetFocus;
+     Exit;
+   end;
+
+  associarCampos;
+  dm.tb_Cargos.Post;
+  MessageDlg('Salvo com Sucesso!', mtInformation, mbOKCancel,0);
+  EdtNome.Text := '';
+  EdtNome.Enabled := false;
+  btnSalvar.Enabled := false;
+  listar;
+end;
+
+procedure TFrmCargos.FormCreate(Sender: TObject);
+begin
+ dm.tb_Cargos.Active := true;
+ listar;
+end;
+
+procedure TFrmCargos.gridCellClick(Column: TColumn);
+begin
+  EdtNome.Enabled := True;
+  BtnEditar.Enabled := True;
+  BtnExcluir.Enabled := True;
+
+  dm.tb_Cargos.Edit;
+  if dm.query_cargos.FieldByName('cargo').Value <> null then
+  begin
+   EdtNome.Text := dm.query_cargos.FieldByName('cargo').Value;
+   id := dm.query_cargos.FieldByName('id').Value;
+  end;
+end;
+
+procedure TFrmCargos.listar;
+begin
+  dm.query_cargos.Close;
+  dm.query_cargos.SQL.Clear;
+  dm.query_cargos.SQL.Add('SELECT * FROM cargos order by cargo asc');
+  dm.query_cargos.Open;
+end;
+
+end.

@@ -1,0 +1,35 @@
+unit Gastos;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.ComCtrls, Vcl.Grids,
+  Vcl.DBGrids, Vcl.StdCtrls, Vcl.Buttons;
+
+type
+  TFrmGastos = class(TForm)
+    Label2: TLabel;
+    Label1: TLabel;
+    btnNovo: TSpeedButton;
+    btnSalvar: TSpeedButton;
+    BtnExcluir: TSpeedButton;
+    Label3: TLabel;
+    EdtMotivo: TEdit;
+    grid: TDBGrid;
+    edtValor: TEdit;
+    dataBuscar: TDateTimePicker;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmGastos: TFrmGastos;
+
+implementation
+
+{$R *.dfm}
+
+end.

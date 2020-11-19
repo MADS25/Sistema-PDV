@@ -1,0 +1,103 @@
+unit Usuarios;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.StdCtrls, Vcl.Grids,
+  Vcl.DBGrids, Vcl.Buttons;
+
+type
+  TFrmUsuarios = class(TForm)
+    btnNovo: TSpeedButton;
+    btnSalvar: TSpeedButton;
+    btnEditar: TSpeedButton;
+    btnExcluir: TSpeedButton;
+    DBGrid1: TDBGrid;
+    EdtNome: TEdit;
+    lb_nome: TLabel;
+    EdtBuscarNome: TEdit;
+    lb_buscar: TLabel;
+    btnBuscarFuncionario: TSpeedButton;
+    edtUsuario: TEdit;
+    Label1: TLabel;
+    EdtSenha: TEdit;
+    Label2: TLabel;
+    procedure btnBuscarFuncionarioClick(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
+
+  private
+    { Private declarations }
+      procedure limpar;
+      procedure habilitarCampos;
+      procedure desabilitarCampos;
+      procedure verificaCadastro;
+
+      procedure associarCampos;
+      procedure listar;
+      procedure buscarNome;
+
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmUsuarios: TFrmUsuarios;
+
+implementation
+
+{$R *.dfm}
+
+uses Modulo, Menu, Funcionarios;
+
+procedure TFrmUsuarios.btnBuscarFuncionarioClick(Sender: TObject);
+begin
+  chamada := 'Func';
+  FrmFuncionarios := TFrmFuncionarios.Create(self);
+  FrmFuncionarios.Show;
+end;
+
+procedure TFrmUsuarios.FormActivate(Sender: TObject);
+begin
+ EdtNome.Text := nomeFunc;
+end;
+
+procedure TFrmUsuarios.limpar;
+begin
+
+end;
+
+procedure TFrmUsuarios.habilitarCampos;
+begin
+
+end;
+
+procedure TFrmUsuarios.desabilitarCampos;
+begin
+
+end;
+
+procedure TFrmUsuarios.verificaCadastro;
+begin
+
+end;
+
+procedure TFrmUsuarios.associarCampos;
+begin
+    dm.tb_usu.FieldByName('nome').Value := EdtNome.Text;
+    dm.tb_usu.FieldByName('cpf').Value := EdtCPF.Text;
+    dm.tb_usu.FieldByName('telefone').Value := EdtTelefone.Text;
+end;
+
+procedure TFrmUsuarios.listar;
+begin
+
+end;
+
+procedure TFrmUsuarios.buscarNome;
+begin
+
+end;
+
+
+end.

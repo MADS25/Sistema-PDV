@@ -1,0 +1,82 @@
+unit CancelarItem;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
+
+type
+  TFrmCancelarItem = class(TForm)
+    Label1: TLabel;
+    EdtIdItem: TEdit;
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FrmCancelarItem: TFrmCancelarItem;
+  estoque: double;
+
+implementation
+
+{$R *.dfm}
+
+uses Modulo;
+
+procedure TFrmCancelarItem.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if key =13 then
+    begin
+      if Trim(EdtIdItem.Text) = '' then
+         begin
+             MessageDlg('Insira o Código do Item!', mtInformation, mbOKCancel, 0);
+             EdtIdItem.Text := '';
+             EdtIdItem.SetFocus;
+             exit;
+         end;
+
+      if MessageDlg('Deseja Excluir o registro?', mtConfirmation,[mbYes,mbNo],0) = mrYes then
+         begin
+            try
+               dm.query_coringa.Close;
+               dm.query_coringa.SQL.Clear;
+               dm.query_coringa.SQL.Add('DELETE FROM detalhes_vendas WHERE id = :id');
+               dm.query_coringa.ParamByName('id').Value := EdtIdItem.Text;
+               dm.query_coringa.ExecSQL;
+               Close;
+            except
+               MessageDlg('Codigo do Produto Invalido!', mtInformation, mbOKCancel,0);
+               EdtIdItem.Text := '';
+               EdtIdItem.SetFocus;
+               exit;
+            end;
+
+            //Recuperar os dados do produto excluido
+               dm.query_produtos.Close;
+               dm.query_produtos.SQL.Clear;
+                dm.query_produtos.SQL.Add('SELECT * FROM produtos where codigo = :codigo');
+
+
+
+
+
+            //Devolver   o Produto para Estoque
+               estoque := strToFloat(edtEstoque.Text) + strToFloat(edtQuantidade.Text);
+
+               dm.query_produtos.Close;
+               dm.query_produtos.SQL.Clear;
+               dm.query_produtos.SQL.Add('UPDATE produtos set estoque = :estoque where id = :id');
+               dm.query_produtos.ParamByName('estoque').Value := estoque;
+               dm.query_produtos.ParamByName('id').Value := idProduto;
+               dm.query_produtos.ExecSQL;
+
+         end;
+    end;
+end;
+
+end.
